@@ -214,7 +214,8 @@
         }
 
         .table-wrapper {
-            overflow-x: auto;
+            overflow: auto;
+            max-height: 75vh;
             border-radius: 8px;
             border: 1px solid var(--table-border);
         }
@@ -237,10 +238,20 @@
             z-index: 1;
         }
 
+        thead tr:first-child th {
+            top: 0;
+            z-index: 3;
+        }
+
+        thead tr:nth-child(2) th {
+            top: 33px;
+            z-index: 3;
+        }
+
         thead th.name-col {
             position: sticky;
             left: 0;
-            z-index: 2;
+            z-index: 4;
             background: #eae8f3;
             min-width: 140px;
             text-align: left;
