@@ -4,73 +4,401 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Absensi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #f5f6fa;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f9fafb;
+            --border-color: #e2e5ed;
+            --text-primary: #1e1e2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #9ca3af;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            --accent-glow: rgba(79, 70, 229, 0.2);
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --table-header-bg: #f0eef8;
+            --table-row-hover: #f9f8fd;
+            --table-border: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: sans-serif;
-            margin: 20px;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, #1e1e2e 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        th {
-            background-color: #f2f2f2;
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
         }
-        .date-header {
-            font-weight: bold;
+
+        .input-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(12px);
         }
-        .subheader {
-            font-size: 0.9em;
-            font-weight: normal;
+
+        .input-section label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
         }
+
         #rawData {
             width: 100%;
-            height: 150px;
-            margin-bottom: 20px;
+            height: 180px;
+            background: #f5f6fa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            padding: 1rem;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+            line-height: 1.5;
         }
+
+        #rawData:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        #rawData::placeholder {
+            color: var(--text-muted);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
         #processButton {
-            padding: 10px 15px;
-            background-color: #4CAF50;
+            padding: 0.65rem 1.5rem;
+            background: var(--accent);
             color: white;
             border: none;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            letter-spacing: 0.01em;
         }
+
         #processButton:hover {
-            background-color: #45a049;
+            background: var(--accent-hover);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-1px);
         }
+
+        #processButton:active {
+            transform: translateY(0);
+        }
+
+        #formatBadge {
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        #formatBadge.format-a {
+            display: inline-flex;
+            color: #6d28d9;
+            border-color: rgba(109, 40, 217, 0.25);
+            background: rgba(109, 40, 217, 0.06);
+        }
+
+        #formatBadge.format-b {
+            display: inline-flex;
+            color: #059669;
+            border-color: rgba(5, 150, 105, 0.25);
+            background: rgba(5, 150, 105, 0.06);
+        }
+
+        #formatBadge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Results section */
         #attendanceTableContainer {
-            margin-top: 20px;
+            margin-top: 1.5rem;
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .result-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stat strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--table-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        thead th {
+            background: var(--table-header-bg);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--table-border);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        thead th.name-col {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #eae8f3;
+            min-width: 140px;
+            text-align: left;
+        }
+
+        .date-header {
+            font-weight: 600;
+            font-size: 0.75rem;
+            border-left: 1px solid var(--table-border);
+        }
+
+        .subheader {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .subheader:nth-child(even) {
+            border-right: 1px solid var(--table-border);
+        }
+
+        tbody td {
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid var(--table-border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        tbody td.name-cell {
+            position: sticky;
+            left: 0;
+            background: var(--bg-primary);
+            text-align: left;
+            font-weight: 500;
+            color: var(--text-primary);
+            z-index: 1;
+            border-right: 1px solid var(--table-border);
+        }
+
+        tbody tr:hover td {
+            background: var(--table-row-hover);
+        }
+
+        tbody tr:hover td.name-cell {
+            background: #f0eef8;
+        }
+
+        td.time-in {
+            color: var(--success);
+        }
+
+        td.time-out {
+            color: #2563eb;
+            border-right: 1px solid var(--table-border);
+        }
+
+        td.time-missing {
+            color: var(--text-muted);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #fca5a5;
+            font-size: 0.85rem;
+            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
 <body>
 
-    <h1>Proses Data Absensi</h1>
-    <p>Masukkan data absensi mentah pada kolom di bawah ini, kemudian klik tombol "Proses Data".</p>
-    <textarea id="rawData" placeholder="Masukkan data absensi mentah di sini..."></textarea>
-    <button id="processButton">Proses Data</button>
+    <div class="container">
+        <h1>Proses Data Absensi</h1>
+        <p class="subtitle">Tempel data absensi mentah, format akan terdeteksi otomatis.</p>
 
-    <div id="attendanceTableContainer">
+        <div class="input-section">
+            <label for="rawData">Data Mentah</label>
+            <textarea id="rawData" placeholder="Tempel data absensi di sini... (Format &quot;Lap. Detail Absensi&quot; atau format CSV scan log)"></textarea>
+            <div class="actions">
+                <button id="processButton">Proses Data</button>
+                <div id="formatBadge"><span class="dot"></span><span id="formatLabel"></span></div>
+            </div>
         </div>
+
+        <div id="attendanceTableContainer"></div>
+    </div>
 
     <script>
         document.getElementById('processButton').addEventListener('click', function() {
             const rawData = document.getElementById('rawData').value;
             if (!rawData.trim()) {
-                alert("Silakan masukkan data absensi mentah.");
+                showError("Silakan masukkan data absensi mentah.");
                 return;
             }
-            processAttendanceData(rawData);
+
+            const format = detectFormat(rawData);
+            const badge = document.getElementById('formatBadge');
+            const label = document.getElementById('formatLabel');
+
+            badge.className = '';
+
+            if (format === 'A') {
+                badge.className = 'format-a';
+                label.textContent = 'Format: Lap. Detail Absensi';
+                processFormatA(rawData);
+            } else if (format === 'B') {
+                badge.className = 'format-b';
+                label.textContent = 'Format: CSV Scan Log';
+                processFormatB(rawData);
+            } else {
+                showError("Format data tidak dikenali. Pastikan data sesuai dengan format 'Lap. Detail Absensi' atau format CSV scan log.");
+            }
         });
 
-        function processAttendanceData(data) {
+        /**
+         * Detect input format:
+         * Format A: "Lap. Detail Absensi" style (has "Waktu Absen" and "ID:;;" lines)
+         * Format B: CSV scan log (has header like "Tanggal scan;Tanggal;Jam;...")
+         */
+        function detectFormat(data) {
+            const lines = data.split('\n').map(l => l.trim()).filter(l => l);
+            for (const line of lines) {
+                if (line.startsWith("Lap. Detail Absensi") || line.startsWith("Waktu Absen;;")) {
+                    return 'A';
+                }
+                if (line.toLowerCase().includes('tanggal scan') || line.toLowerCase().includes('tanggal;') || (line.includes('PIN') && line.includes('NIP') && line.includes('Nama'))) {
+                    return 'B';
+                }
+            }
+            // Fallback heuristic: if lines have many semicolons and time patterns with "ID:;;"
+            if (data.includes('ID:;;')) return 'A';
+            // Check if most lines have 10+ semicolons and include date pattern DD-MM-YYYY
+            const datePattern = /\d{2}-\d{2}-\d{4}/;
+            const semiCount = lines.filter(l => l.split(';').length >= 10 && datePattern.test(l)).length;
+            if (semiCount > lines.length * 0.3) return 'B';
+
+            return null;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('attendanceTableContainer');
+            container.innerHTML = `<div class="error-msg">${message}</div>`;
+            document.getElementById('formatBadge').className = '';
+        }
+
+        // =============================================
+        // FORMAT A: "Lap. Detail Absensi" parser
+        // =============================================
+        function processFormatA(data) {
             const lines = data.split('\n').map(line => line.trim()).filter(line => line);
             let attendancePeriodLine = lines.find(line => line.startsWith("Waktu Absen;;"));
             let dateRange = [];
@@ -94,15 +422,15 @@
                             dateRange.push(String(day).padStart(2, '0'));
                         }
                     } else {
-                        alert("Format tanggal pada 'Waktu Absen' tidak sesuai (kurang tanda '-').");
+                        showError("Format tanggal pada 'Waktu Absen' tidak sesuai (kurang tanda '-').");
                         return;
                     }
                 } else {
-                     alert("Format 'Waktu Absen' tidak sesuai.");
+                     showError("Format 'Waktu Absen' tidak sesuai.");
                      return;
                 }
             } else {
-                alert("Baris 'Waktu Absen' tidak ditemukan atau formatnya salah.");
+                showError("Baris 'Waktu Absen' tidak ditemukan atau formatnya salah.");
                 return;
             }
 
@@ -118,7 +446,7 @@
                     if (parts.length > 5) {
                         const id = parts[1].trim();
                         const name = parts[5].trim(); // Indeks yang benar untuk Nama
-                        
+
                         if (id && name) { // Pastikan ID dan Nama tidak kosong setelah trim
                             currentEmployee = { id, name, attendance: Array(dateRange.length).fill('') };
                             employees.push(currentEmployee);
@@ -128,9 +456,9 @@
                                 if (!nextLine.startsWith("ID:;;") &&
                                     !nextLine.startsWith("Waktu Absen;;") &&
                                     !nextLine.startsWith("Lap. Detail Absensi;;") &&
-                                    !nextLine.match(/^\d+(?:;\d+)*;*$/) && 
+                                    !nextLine.match(/^\d+(?:;\d+)*;*$/) &&
                                     nextLine.includes(':') && nextLine.includes(';')) {
-                                    
+
                                     currentEmployee.attendance = nextLine.split(';');
                                 }
                             }
@@ -142,14 +470,180 @@
                     }
                 }
             }
-            
+
             // Tidak perlu filter validEmployees jika logika di atas sudah memastikan ID dan Nama ada
             if (employees.length === 0 && lines.some(l => l.startsWith("ID:;;"))) {
-                alert("Data karyawan terdeteksi (baris ID ditemukan), namun tidak ada yang berhasil diproses menjadi entri tabel. Periksa format detail pada baris ID atau pastikan nama tidak kosong.");
+                showError("Data karyawan terdeteksi (baris ID ditemukan), namun tidak ada yang berhasil diproses menjadi entri tabel. Periksa format detail pada baris ID atau pastikan nama tidak kosong.");
+                return;
             }
             renderTable(employees, dateRange, year, month);
         }
 
+        // =============================================
+        // FORMAT B: CSV scan log parser
+        // =============================================
+        function processFormatB(data) {
+            const lines = data.split('\n').map(l => l.trim()).filter(l => l);
+
+            // Find header line
+            let headerIndex = -1;
+            let headers = [];
+            for (let i = 0; i < lines.length; i++) {
+                const lower = lines[i].toLowerCase();
+                if (lower.includes('tanggal') && (lower.includes('nama') || lower.includes('pin') || lower.includes('nip'))) {
+                    headers = lines[i].split(';');
+                    headerIndex = i;
+                    break;
+                }
+            }
+
+            if (headerIndex === -1) {
+                showError("Header CSV tidak ditemukan. Pastikan ada baris header yang mengandung 'Tanggal', 'Nama', dll.");
+                return;
+            }
+
+            // Map column indices
+            const colMap = {};
+            headers.forEach((h, idx) => {
+                const key = h.trim().toLowerCase();
+                if (key === 'tanggal') colMap.tanggal = idx;
+                else if (key === 'jam') colMap.jam = idx;
+                else if (key === 'pin') colMap.pin = idx;
+                else if (key === 'nip') colMap.nip = idx;
+                else if (key === 'nama') colMap.nama = idx;
+                else if (key === 'jabatan') colMap.jabatan = idx;
+                else if (key === 'departemen') colMap.departemen = idx;
+                else if (key === 'i/o') colMap.io = idx;
+            });
+
+            if (colMap.nama === undefined || colMap.tanggal === undefined || colMap.jam === undefined) {
+                showError("Header CSV harus mengandung kolom 'Tanggal', 'Jam', dan 'Nama'.");
+                return;
+            }
+
+            // Parse data rows
+            const records = [];
+            for (let i = headerIndex + 1; i < lines.length; i++) {
+                const cols = lines[i].split(';');
+                if (cols.length < headers.length) continue;
+
+                const nama = (cols[colMap.nama] || '').trim();
+                const tanggalStr = (cols[colMap.tanggal] || '').trim(); // DD-MM-YYYY
+                const jamStr = (cols[colMap.jam] || '').trim(); // HH:MM:SS
+                const pin = colMap.pin !== undefined ? (cols[colMap.pin] || '').trim() : '';
+
+                if (!nama || !tanggalStr || !jamStr) continue;
+
+                // Parse date
+                const dateParts = tanggalStr.split('-');
+                if (dateParts.length !== 3) continue;
+
+                const day = dateParts[0];
+                const monthNum = dateParts[1];
+                const yearNum = dateParts[2];
+
+                // Parse time to minutes for comparison
+                const timeParts = jamStr.split(':');
+                const timeMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+
+                records.push({
+                    pin,
+                    nama,
+                    day,
+                    month: monthNum,
+                    year: yearNum,
+                    jam: jamStr.substring(0, 5), // HH:MM
+                    timeMinutes,
+                    dateKey: `${yearNum}-${monthNum}-${day}`
+                });
+            }
+
+            if (records.length === 0) {
+                showError("Tidak ada data scan yang valid ditemukan setelah header.");
+                return;
+            }
+
+            // Determine date range from data
+            const allDates = new Set();
+            let yearVal = '';
+            let monthVal = '';
+            records.forEach(r => {
+                allDates.add(r.dateKey);
+                yearVal = r.year;
+                monthVal = r.month;
+            });
+
+            // Sort dates and build dateRange
+            const sortedDates = Array.from(allDates).sort();
+            const firstDate = sortedDates[0].split('-');
+            const lastDate = sortedDates[sortedDates.length - 1].split('-');
+            yearVal = firstDate[0];
+            monthVal = firstDate[1];
+
+            const startDay = parseInt(firstDate[2]);
+            const endDay = parseInt(lastDate[2]);
+
+            // Handle month boundaries: if same month, use range; otherwise just use actual dates
+            let dateRange = [];
+            if (firstDate[1] === lastDate[1]) {
+                for (let d = startDay; d <= endDay; d++) {
+                    dateRange.push(String(d).padStart(2, '0'));
+                }
+            } else {
+                // Multi-month: just use actual dates present
+                sortedDates.forEach(dk => {
+                    dateRange.push(dk.split('-')[2]);
+                });
+            }
+
+            // Group records by employee
+            const employeeMap = new Map(); // key: pin or nama
+            records.forEach(r => {
+                const empKey = r.pin || r.nama;
+                if (!employeeMap.has(empKey)) {
+                    employeeMap.set(empKey, { nama: r.nama, days: {} });
+                }
+                const emp = employeeMap.get(empKey);
+                if (!emp.days[r.day]) {
+                    emp.days[r.day] = [];
+                }
+                emp.days[r.day].push(r);
+            });
+
+            // Build employees array matching format A output
+            const employees = [];
+            employeeMap.forEach((empData, empKey) => {
+                const attendance = dateRange.map(day => {
+                    const dayRecords = empData.days[day];
+                    if (!dayRecords || dayRecords.length === 0) return '';
+
+                    // Sort by time
+                    dayRecords.sort((a, b) => a.timeMinutes - b.timeMinutes);
+                    const earliest = dayRecords[0].jam;
+                    const latest = dayRecords[dayRecords.length - 1].jam;
+
+                    if (dayRecords.length === 1) {
+                        return earliest; // Single scan
+                    }
+                    return earliest + latest; // e.g. "07:3016:15"
+                });
+
+                employees.push({
+                    id: empKey,
+                    name: empData.nama,
+                    attendance
+                });
+            });
+
+            // Sort employees by name
+            employees.sort((a, b) => a.name.localeCompare(b.name));
+
+            renderTable(employees, dateRange, yearVal, monthVal);
+        }
+
+        // =============================================
+        // Shared: parse daily attendance cell
+        // =============================================
         function parseDailyAttendance(dayData) {
             if (!dayData || dayData.trim() === '') {
                 return { in: '-', out: '-' };
@@ -164,23 +658,47 @@
             return { in: times[0], out: times[times.length - 1] };
         }
 
+        // =============================================
+        // Shared: render results table
+        // =============================================
         function renderTable(employees, dateRange, year, month) {
             const container = document.getElementById('attendanceTableContainer');
-            container.innerHTML = ''; 
+            container.innerHTML = '';
 
             if (employees.length === 0) {
-                container.innerHTML = '<p>Tidak ada data karyawan untuk ditampilkan. Pastikan data mentah sudah benar dan ada data karyawan yang sesuai format.</p>';
+                container.innerHTML = '<div class="no-data">Tidak ada data karyawan untuk ditampilkan.</div>';
                 return;
             }
+
+            const card = document.createElement('div');
+            card.className = 'result-card';
+
+            // Header with stats
+            const header = document.createElement('div');
+            header.className = 'result-header';
+            header.innerHTML = `
+                <h2>Hasil Proses Absensi</h2>
+                <div class="result-stats">
+                    <span class="stat"><strong>${employees.length}</strong> karyawan</span>
+                    <span class="stat"><strong>${dateRange.length}</strong> hari</span>
+                </div>
+            `;
+            card.appendChild(header);
+
+            // Table wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
 
             const table = document.createElement('table');
             const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
 
+            // Header row 1: dates
             const headerRow1 = document.createElement('tr');
             const nameHeader = document.createElement('th');
             nameHeader.rowSpan = 2;
             nameHeader.textContent = 'Nama';
+            nameHeader.className = 'name-col';
             headerRow1.appendChild(nameHeader);
 
             dateRange.forEach(day => {
@@ -192,47 +710,53 @@
             });
             thead.appendChild(headerRow1);
 
+            // Header row 2: Masuk / Keluar
             const headerRow2 = document.createElement('tr');
             dateRange.forEach(() => {
                 const inHeader = document.createElement('th');
                 inHeader.classList.add('subheader');
-                inHeader.textContent = 'Jam Masuk';
+                inHeader.textContent = 'Masuk';
                 headerRow2.appendChild(inHeader);
 
                 const outHeader = document.createElement('th');
                 outHeader.classList.add('subheader');
-                outHeader.textContent = 'Jam Keluar';
+                outHeader.textContent = 'Keluar';
                 headerRow2.appendChild(outHeader);
             });
             thead.appendChild(headerRow2);
             table.appendChild(thead);
 
+            // Body rows
             employees.forEach(emp => {
                 const row = document.createElement('tr');
                 const nameCell = document.createElement('td');
                 nameCell.textContent = emp.name;
-                nameCell.style.textAlign = 'left';
+                nameCell.className = 'name-cell';
                 row.appendChild(nameCell);
 
-                const attendanceDataForEmployee = emp.attendance;
+                const attendanceData = emp.attendance;
 
                 for (let dayIndex = 0; dayIndex < dateRange.length; dayIndex++) {
-                    const dayAttendanceString = (dayIndex < attendanceDataForEmployee.length) ? attendanceDataForEmployee[dayIndex] : '';
-                    const { in: clockIn, out: clockOut } = parseDailyAttendance(dayAttendanceString);
+                    const dayString = (dayIndex < attendanceData.length) ? attendanceData[dayIndex] : '';
+                    const { in: clockIn, out: clockOut } = parseDailyAttendance(dayString);
 
                     const inCell = document.createElement('td');
                     inCell.textContent = clockIn;
+                    inCell.className = clockIn === '-' ? 'time-missing' : 'time-in';
                     row.appendChild(inCell);
 
                     const outCell = document.createElement('td');
                     outCell.textContent = clockOut;
+                    outCell.className = clockOut === '-' ? 'time-missing' : 'time-out';
                     row.appendChild(outCell);
                 }
                 tbody.appendChild(row);
             });
 
             table.appendChild(tbody);
-            container.appendChild(table);
+            wrapper.appendChild(table);
+            card.appendChild(wrapper);
+            container.appendChild(card);
         }
     </script>
 
