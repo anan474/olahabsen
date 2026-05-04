@@ -375,16 +375,19 @@
                 if (line.startsWith("Lap. Detail Absensi") || line.startsWith("Waktu Absen;;")) {
                     return 'A';
                 }
-                if (line.toLowerCase().includes('tanggal scan') || line.toLowerCase().includes('tanggal;') || (line.includes('PIN') && line.includes('NIP') && line.includes('Nama'))) {
+                const lower = line.toLowerCase();
+                if (lower.includes('tanggal scan') || lower.includes('tanggal;') || lower.includes('tanggal,') ||
+                    ((line.includes('PIN') || line.includes('pin')) && (line.includes('Nama') || line.includes('nama')))) {
                     return 'B';
                 }
             }
             // Fallback heuristic: if lines have many semicolons and time patterns with "ID:;;"
             if (data.includes('ID:;;')) return 'A';
-            // Check if most lines have 10+ semicolons and include date pattern DD-MM-YYYY
+            // Check if most lines have 10+ delimited fields and include date pattern DD-MM-YYYY
             const datePattern = /\d{2}-\d{2}-\d{4}/;
-            const semiCount = lines.filter(l => l.split(';').length >= 10 && datePattern.test(l)).length;
-            if (semiCount > lines.length * 0.3) return 'B';
+            const sep = lines[0] && (lines[0].split(',').length > lines[0].split(';').length) ? ',' : ';';
+            const delimCount = lines.filter(l => l.split(sep).length >= 10 && datePattern.test(l)).length;
+            if (delimCount > lines.length * 0.3) return 'B';
 
             return null;
         }
@@ -485,13 +488,18 @@
         function processFormatB(data) {
             const lines = data.split('\n').map(l => l.trim()).filter(l => l);
 
-            // Find header line
+            // Find header line and auto-detect delimiter (, or ;)
             let headerIndex = -1;
             let headers = [];
+            let delimiter = ';';
             for (let i = 0; i < lines.length; i++) {
                 const lower = lines[i].toLowerCase();
                 if (lower.includes('tanggal') && (lower.includes('nama') || lower.includes('pin') || lower.includes('nip'))) {
-                    headers = lines[i].split(';');
+                    // Detect delimiter: whichever produces more columns
+                    const bySemi = lines[i].split(';');
+                    const byComma = lines[i].split(',');
+                    delimiter = byComma.length > bySemi.length ? ',' : ';';
+                    headers = lines[i].split(delimiter);
                     headerIndex = i;
                     break;
                 }
@@ -524,7 +532,7 @@
             // Parse data rows
             const records = [];
             for (let i = headerIndex + 1; i < lines.length; i++) {
-                const cols = lines[i].split(';');
+                const cols = lines[i].split(delimiter);
                 if (cols.length < headers.length) continue;
 
                 const nama = (cols[colMap.nama] || '').trim();
