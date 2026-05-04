@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Absensi</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .date-header {
+            font-weight: bold;
+        }
+        .subheader {
+            font-size: 0.9em;
+            font-weight: normal;
+        }
+        #rawData {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        #processButton {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #processButton:hover {
+            background-color: #45a049;
+        }
+        #attendanceTableContainer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Proses Data Absensi</h1>
+    <p>Masukkan data absensi mentah pada kolom di bawah ini, kemudian klik tombol "Proses Data".</p>
+    <textarea id="rawData" placeholder="Masukkan data absensi mentah di sini..."></textarea>
+    <button id="processButton">Proses Data</button>
+
+    <div id="attendanceTableContainer">
+        </div>
+
+    <script>
+        document.getElementById('processButton').addEventListener('click', function() {
+            const rawData = document.getElementById('rawData').value;
+            if (!rawData.trim()) {
+                alert("Silakan masukkan data absensi mentah.");
+                return;
+            }
+            processAttendanceData(rawData);
+        });
+
+        function processAttendanceData(data) {
+            const lines = data.split('\n').map(line => line.trim()).filter(line => line);
+            let attendancePeriodLine = lines.find(line => line.startsWith("Waktu Absen;;"));
+            let dateRange = [];
+            let year = '';
+            let month = '';
+
+            if (attendancePeriodLine) {
+                const parts = attendancePeriodLine.split(';;');
+                if (parts.length > 1 && parts[1].includes(' ~ ')) {
+                    const period = parts[1].split(' ~ ');
+                    const startDateStr = period[0];
+                    const endDateStr = period[1];
+
+                    if (startDateStr.includes('-') && endDateStr.includes('-')) {
+                        year = startDateStr.split('-')[0];
+                        month = startDateStr.split('-')[1];
+                        const startDay = parseInt(startDateStr.split('-')[2]);
+                        const endDay = parseInt(endDateStr.split('-')[2]);
+
+                        for (let day = startDay; day <= endDay; day++) {
+                            dateRange.push(String(day).padStart(2, '0'));
+                        }
+                    } else {
+                        alert("Format tanggal pada 'Waktu Absen' tidak sesuai (kurang tanda '-').");
+                        return;
+                    }
+                } else {
+                     alert("Format 'Waktu Absen' tidak sesuai.");
+                     return;
+                }
+            } else {
+                alert("Baris 'Waktu Absen' tidak ditemukan atau formatnya salah.");
+                return;
+            }
+
+            const employees = [];
+            let currentEmployee = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                if (line.startsWith("ID:;;")) {
+                    const parts = line.split(';;');
+                    // Memastikan parts[1] (untuk ID) dan parts[5] (untuk Nama) ada
+                    if (parts.length > 5) {
+                        const id = parts[1].trim();
+                        const name = parts[5].trim(); // Indeks yang benar untuk Nama
+                        
+                        if (id && name) { // Pastikan ID dan Nama tidak kosong setelah trim
+                            currentEmployee = { id, name, attendance: Array(dateRange.length).fill('') };
+                            employees.push(currentEmployee);
+
+                            if (i + 1 < lines.length) {
+                                const nextLine = lines[i + 1];
+                                if (!nextLine.startsWith("ID:;;") &&
+                                    !nextLine.startsWith("Waktu Absen;;") &&
+                                    !nextLine.startsWith("Lap. Detail Absensi;;") &&
+                                    !nextLine.match(/^\d+(?:;\d+)*;*$/) && 
+                                    nextLine.includes(':') && nextLine.includes(';')) {
+                                    
+                                    currentEmployee.attendance = nextLine.split(';');
+                                }
+                            }
+                        } else {
+                            console.warn("Baris ID dilewati karena ID atau Nama kosong setelah trim:", line);
+                        }
+                    } else {
+                        console.warn("Baris ID dilewati karena format tidak sesuai (kurang parts):", line);
+                    }
+                }
+            }
+            
+            // Tidak perlu filter validEmployees jika logika di atas sudah memastikan ID dan Nama ada
+            if (employees.length === 0 && lines.some(l => l.startsWith("ID:;;"))) {
+                alert("Data karyawan terdeteksi (baris ID ditemukan), namun tidak ada yang berhasil diproses menjadi entri tabel. Periksa format detail pada baris ID atau pastikan nama tidak kosong.");
+            }
+            renderTable(employees, dateRange, year, month);
+        }
+
+        function parseDailyAttendance(dayData) {
+            if (!dayData || dayData.trim() === '') {
+                return { in: '-', out: '-' };
+            }
+            const times = dayData.match(/\d{2}:\d{2}/g);
+            if (!times || times.length === 0) {
+                return { in: '-', out: '-' };
+            }
+            if (times.length === 1) {
+                return { in: times[0], out: '-' };
+            }
+            return { in: times[0], out: times[times.length - 1] };
+        }
+
+        function renderTable(employees, dateRange, year, month) {
+            const container = document.getElementById('attendanceTableContainer');
+            container.innerHTML = ''; 
+
+            if (employees.length === 0) {
+                container.innerHTML = '<p>Tidak ada data karyawan untuk ditampilkan. Pastikan data mentah sudah benar dan ada data karyawan yang sesuai format.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            const headerRow1 = document.createElement('tr');
+            const nameHeader = document.createElement('th');
+            nameHeader.rowSpan = 2;
+            nameHeader.textContent = 'Nama';
+            headerRow1.appendChild(nameHeader);
+
+            dateRange.forEach(day => {
+                const dateHeader = document.createElement('th');
+                dateHeader.colSpan = 2;
+                dateHeader.classList.add('date-header');
+                dateHeader.textContent = `${day}-${month}-${year}`;
+                headerRow1.appendChild(dateHeader);
+            });
+            thead.appendChild(headerRow1);
+
+            const headerRow2 = document.createElement('tr');
+            dateRange.forEach(() => {
+                const inHeader = document.createElement('th');
+                inHeader.classList.add('subheader');
+                inHeader.textContent = 'Jam Masuk';
+                headerRow2.appendChild(inHeader);
+
+                const outHeader = document.createElement('th');
+                outHeader.classList.add('subheader');
+                outHeader.textContent = 'Jam Keluar';
+                headerRow2.appendChild(outHeader);
+            });
+            thead.appendChild(headerRow2);
+            table.appendChild(thead);
+
+            employees.forEach(emp => {
+                const row = document.createElement('tr');
+                const nameCell = document.createElement('td');
+                nameCell.textContent = emp.name;
+                nameCell.style.textAlign = 'left';
+                row.appendChild(nameCell);
+
+                const attendanceDataForEmployee = emp.attendance;
+
+                for (let dayIndex = 0; dayIndex < dateRange.length; dayIndex++) {
+                    const dayAttendanceString = (dayIndex < attendanceDataForEmployee.length) ? attendanceDataForEmployee[dayIndex] : '';
+                    const { in: clockIn, out: clockOut } = parseDailyAttendance(dayAttendanceString);
+
+                    const inCell = document.createElement('td');
+                    inCell.textContent = clockIn;
+                    row.appendChild(inCell);
+
+                    const outCell = document.createElement('td');
+                    outCell.textContent = clockOut;
+                    row.appendChild(outCell);
+                }
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+    </script>
+
+</body>
+</html>
